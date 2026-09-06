@@ -79,4 +79,42 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 ErrorResponse.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
     }
+
+    /** OFFRE_INTROUVABLE : aucune offre acceptée pour la réservation (Phase 6). */
+    @ExceptionHandler(OfferNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOfferNotFound(OfferNotFoundException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** OFFRE_NON_ADRESSEE : l'offre n'a pas été diffusée à ce chauffeur (Phase 6). */
+    @ExceptionHandler(OfferNotAddressedToThisDriverException.class)
+    public ResponseEntity<ErrorResponse> handleOfferNotAddressed(OfferNotAddressedToThisDriverException ex,
+                                                                HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ErrorResponse.of(HttpStatus.FORBIDDEN.value(), "Forbidden", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** COURSE_NON_ATTRIBUEE : la réservation n'est pas affectée à un chauffeur (Phase 6). */
+    @ExceptionHandler(ReservationNotAcceptedException.class)
+    public ResponseEntity<ErrorResponse> handleReservationNotAccepted(ReservationNotAcceptedException ex,
+                                                                     HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ErrorResponse.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** COURSE_NON_DEMARREE : la réservation n'est pas dans un état démarrable (Phase 6). */
+    @ExceptionHandler(ReservationNotStartedException.class)
+    public ResponseEntity<ErrorResponse> handleReservationNotStarted(ReservationNotStartedException ex,
+                                                                     HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ErrorResponse.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** TURN_INTROUVABLE : le Turn associé à une réservation acceptée est introuvable (Phase 6). */
+    @ExceptionHandler(TurnNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTurnNotFound(TurnNotFoundException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), request.getRequestURI()));
+    }
 }
