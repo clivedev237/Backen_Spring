@@ -17,9 +17,11 @@ import com.vora.reservation.domain.model.Turn;
 import com.vora.reservation.infrastructure.persistence.ReservationOfferRepository;
 import com.vora.reservation.infrastructure.persistence.ReservationRepository;
 import com.vora.reservation.infrastructure.persistence.TurnRepository;
+import com.vora.reservation.infrastructure.notification.NotificationService;
 import com.vora.reservation.infrastructure.security.AuthenticatedUser;
 import com.vora.reservation.infrastructure.security.VoraRole;
 import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,7 @@ public class DriveTripService {
     private final ReservationOfferRepository reservationOfferRepository;
     private final OfferService offerService;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
     // ---------- Start (chauffeur affecté uniquement) ----------
 
@@ -98,6 +101,13 @@ public class DriveTripService {
         turn.startBoarding();
         turnRepository.save(turn);
 
+        // Phase 9 : notification webhook front — chauffeur a démarré la course.
+        try {
+            notificationService.notifyDriverStarted(reservationId, turn.getId());
+        } catch (Exception e) {
+            log.warn("Notification démarrage non délivrée pour réservation {} : {}", reservationId, e.getMessage());
+        }
+
         log.info("Chauffeur {} a démarré la course {} (Turn {})", requester.driverId(), reservationId, turn.getId());
         return reservation;
     }
@@ -136,6 +146,13 @@ public class DriveTripService {
 
         reservation.confirmArrival();
         reservationRepository.save(reservation);
+
+        // Phase 9 : notification webhook front — arrivée confirmée.
+        try {
+            notificationService.notifyArrivalConfirmed(reservationId);
+        } catch (Exception e) {
+            log.warn("Notification arrivée confirmée non délivrée pour réservation {} : {}", reservationId, e.getMessage());
+        }
 
         Turn turn = reservation.getTurn();
         if (turn != null) {

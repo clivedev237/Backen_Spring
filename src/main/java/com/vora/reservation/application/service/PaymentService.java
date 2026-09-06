@@ -14,6 +14,7 @@ import com.vora.reservation.infrastructure.client.payment.dto.InitiatePaymentRes
 import com.vora.reservation.infrastructure.client.payment.dto.PaymentStatusResponse;
 import com.vora.reservation.infrastructure.persistence.PaymentReferenceRepository;
 import com.vora.reservation.infrastructure.persistence.ReservationRepository;
+import com.vora.reservation.infrastructure.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ public class PaymentService {
     private final PaymentClient paymentClient;
     private final PaymentReferenceRepository paymentReferenceRepository;
     private final ReservationRepository reservationRepository;
+    private final NotificationService notificationService;
 
     /**
      * Initie le paiement pour une réservation déjà validée (arrivée confirmée).
@@ -122,6 +124,13 @@ public class PaymentService {
         log.info("Paiement initié pour réservation {} (externalPaymentId {}, statut local EN_ATTENTE)",
                 reservationId, externalPaymentId);
 
+        // Phase 9 : notification webhook front — paiement initié.
+        try {
+            notificationService.notifyPaymentInitiated(reservationId);
+        } catch (Exception e) {
+            log.warn("Notification paiement initié non délivrée pour réservation {} : {}", reservationId, e.getMessage());
+        }
+
         return nodeResponse;
     }
 
@@ -175,6 +184,13 @@ public class PaymentService {
 
         log.info("Paiement espèces confirmé pour réservation {} (externalPaymentId {})",
                 reservationId, externalPaymentId);
+
+        // Phase 9 : notification webhook front — paiement réussi.
+        try {
+            notificationService.notifyPaymentSucceeded(reservationId);
+        } catch (Exception e) {
+            log.warn("Notification paiement réussi non délivrée pour réservation {} : {}", reservationId, e.getMessage());
+        }
 
         return nodeResponse;
     }
