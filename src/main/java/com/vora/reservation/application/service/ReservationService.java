@@ -1,35 +1,52 @@
 package com.vora.reservation.application.service;
 
 import com.vora.reservation.api.dto.CreateReservationRequest;
+import com.vora.reservation.application.exception.DestinationOutOfCorridorException;
 import com.vora.reservation.application.exception.ForbiddenOperationException;
 import com.vora.reservation.application.exception.ReservationNotFoundException;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.model.Reservation;
+import com.vora.reservation.infrastructure.client.geo.GeoClient;
+import com.vora.reservation.infrastructure.client.geo.dto.GeoPoint;
+import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationRequest;
+import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationResponse;
 import com.vora.reservation.infrastructure.persistence.ReservationRepository;
 import com.vora.reservation.infrastructure.security.AuthenticatedUser;
 import com.vora.reservation.infrastructure.security.VoraRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationService {
     private final ReservationRepository reservationRepository;
+    private final GeoClient geoClient;
 
     /**
      * Crée une réservation pour le client authentifié. Seul un CLIENT peut
      * créer une réservation ; le {@code clientId} provient exclusivement de
      * l'identité posée par le Gateway, jamais du corps de la requête.
+     * <p>
+     * Avant toute persistance, la destination est vérifiée auprès de Django
+     * Geo (cadrage §6, étape 3 ; POST /api/v1/geo/verify-destination). Voir
+     * {@link #verifyDestinationIsReachable} pour la distinction, importante,
+     * entre destination invalide (rejet) et absence de chauffeur compatible
+     * dans l'immédiat (pas un rejet, cadrage §5.1).
      */
     @Transactional
     public Reservation create(AuthenticatedUser requester, CreateReservationRequest request) {
         requireRole(requester, VoraRole.CLIENT,
                 "Seul un client peut créer une réservation.");
+
+        verifyDestinationIsReachable(request);
 
         Reservation reservation = Reservation.create(
                 requester.userId(),
@@ -44,6 +61,45 @@ public class ReservationService {
         );
 
         return reservationRepository.save(reservation);
+    }
+
+    /**
+     * Vérifie la destination auprès de Django Geo avant de créer la
+     * réservation.
+     * <ul>
+     *   <li>Destination invalide ou non géocodable ({@code valid=false}) :
+     *   rejet de la création (cadrage §16) — {@link DestinationOutOfCorridorException}.</li>
+     *   <li>Destination valide mais aucun chauffeur compatible dans
+     *   l'immédiat ({@code compatibleCorridors} vide) : ce N'EST PAS une
+     *   erreur. La réservation est tout de même créée EN_ATTENTE et sera
+     *   réévaluée à chaque libération de place chez un chauffeur compatible
+     *   (cadrage §5.1). La diffusion effective d'offres arrive en Phase 5 ;
+     *   la liste des corridors compatibles n'est pas encore exploitée ici,
+     *   elle le sera à partir de la Phase 4 (optimize/turn).</li>
+     * </ul>
+     */
+    private void verifyDestinationIsReachable(CreateReservationRequest request) {
+        VerifyDestinationRequest geoRequest = new VerifyDestinationRequest(
+                new GeoPoint(request.pickup().latitude(), request.pickup().longitude()),
+                new GeoPoint(request.destination().latitude(), request.destination().longitude())
+        );
+
+        VerifyDestinationResponse response = geoClient.verifyDestination(geoRequest);
+
+        if (response == null || !response.valid()) {
+            throw new DestinationOutOfCorridorException(
+                    "La destination n'a pas pu être vérifiée : adresse non géocodable ou hors de la zone de couverture VORA.");
+        }
+
+        List<VerifyDestinationResponse.CompatibleCorridor> compatibleCorridors = response.compatibleCorridors();
+        int compatibleCount = compatibleCorridors == null ? 0 : compatibleCorridors.size();
+        if (compatibleCount == 0) {
+            log.info("Destination valide mais aucun chauffeur compatible dans l'immédiat : "
+                    + "la réservation reste EN_ATTENTE (cadrage §5.1).");
+        } else {
+            log.debug("{} corridor(s) compatible(s) trouvé(s) (tolérance {} m).",
+                    compatibleCount, response.toleranceMeters());
+        }
     }
 
     /**

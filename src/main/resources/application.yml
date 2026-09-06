@@ -39,13 +39,16 @@ spring:
 vora:
   geo:
     base-url: ${VORA_GEO_BASE_URL:http://localhost:8081}
+    # Timeouts courts (cadrage §9.2) : Django Geo est appelé de façon synchrone
+    # à la création de chaque réservation, il ne doit jamais bloquer longtemps.
+    connect-timeout-ms: ${VORA_GEO_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${VORA_GEO_READ_TIMEOUT_MS:3000}
   auth-payment:
     base-url: ${VORA_AUTH_PAYMENT_BASE_URL:http://localhost:8082}
   matching:
     offer-ttl-minutes: 5   # durée de validité d'une offre chauffeur (confirmé)
   turn:
     max-capacity: 4
-
 management:
   endpoints:
     web:

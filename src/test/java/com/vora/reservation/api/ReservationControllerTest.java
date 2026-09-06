@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
+import com.vora.reservation.application.exception.DestinationOutOfCorridorException;
+import com.vora.reservation.application.exception.GeoServiceUnavailableException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -111,6 +113,49 @@ class ReservationControllerTest {
                         .contentType("application/json")
                         .content(body))
                 .andExpect(status().isForbidden());
+    }
+    @Test
+    void createShouldReturn422WhenDestinationOutOfCorridor() throws Exception {
+        when(reservationService.create(any(), any())).thenThrow(
+                new DestinationOutOfCorridorException("Destination hors de la zone de couverture VORA."));
+
+        String body = """
+                {
+                  "pickup": {"latitude": 3.8667, "longitude": 11.5167},
+                  "destination": {"address": "Hors zone", "latitude": 0.0, "longitude": 0.0},
+                  "proposedPrice": 1000,
+                  "paymentMethod": "MTN_MOMO"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/reservations")
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ID, "7")
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ROLE, "CLIENT")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void createShouldReturn503WhenGeoServiceUnavailable() throws Exception {
+        when(reservationService.create(any(), any())).thenThrow(
+                new GeoServiceUnavailableException("Django Geo indisponible", new RuntimeException("timeout")));
+
+        String body = """
+                {
+                  "pickup": {"latitude": 3.8667, "longitude": 11.5167},
+                  "destination": {"address": "Bastos", "latitude": 3.8833, "longitude": 11.5167},
+                  "proposedPrice": 1000,
+                  "paymentMethod": "MTN_MOMO"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/reservations")
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ID, "7")
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ROLE, "CLIENT")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isServiceUnavailable());
     }
 
     @Test

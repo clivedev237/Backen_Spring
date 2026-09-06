@@ -3,12 +3,17 @@ package com.vora.reservation.application;
 import com.vora.reservation.api.dto.CreateReservationRequest;
 import com.vora.reservation.api.dto.DestinationDto;
 import com.vora.reservation.api.dto.PickupLocationDto;
+import com.vora.reservation.application.exception.DestinationOutOfCorridorException;
 import com.vora.reservation.application.exception.ForbiddenOperationException;
+import com.vora.reservation.application.exception.GeoServiceUnavailableException;
 import com.vora.reservation.application.exception.ReservationNotFoundException;
 import com.vora.reservation.application.service.ReservationService;
 import com.vora.reservation.domain.enums.PaymentMethod;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.model.Reservation;
+import com.vora.reservation.infrastructure.client.geo.GeoClient;
+import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationRequest;
+import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationResponse;
 import com.vora.reservation.infrastructure.persistence.ReservationRepository;
 import com.vora.reservation.infrastructure.security.AuthenticatedUser;
 import com.vora.reservation.infrastructure.security.VoraRole;
@@ -20,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,10 +34,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
- class ReservationServiceTest {
+class ReservationServiceTest {
     @Mock
     private ReservationRepository reservationRepository;
+
+    @Mock
+    private GeoClient geoClient;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -51,12 +61,15 @@ import static org.mockito.Mockito.when;
     @Test
     void shouldCreateReservationForClient() {
         AuthenticatedUser client = new AuthenticatedUser(7L, VoraRole.CLIENT, null);
+        when(geoClient.verifyDestination(any(VerifyDestinationRequest.class)))
+                .thenReturn(new VerifyDestinationResponse(true, 750.0, List.of()));
         when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Reservation created = reservationService.create(client, request);
 
         assertThat(created.getClientId()).isEqualTo(7L);
         assertThat(created.getStatus()).isEqualTo(ReservationStatus.EN_ATTENTE);
+        verify(geoClient).verifyDestination(any(VerifyDestinationRequest.class));
         verify(reservationRepository).save(any(Reservation.class));
     }
 
@@ -66,6 +79,26 @@ import static org.mockito.Mockito.when;
 
         assertThatThrownBy(() -> reservationService.create(driver, request))
                 .isInstanceOf(ForbiddenOperationException.class);
+    }
+
+    @Test
+    void shouldRejectCreationWhenDestinationIsOutOfCorridor() {
+        AuthenticatedUser client = new AuthenticatedUser(7L, VoraRole.CLIENT, null);
+        when(geoClient.verifyDestination(any(VerifyDestinationRequest.class)))
+                .thenReturn(new VerifyDestinationResponse(false, null, List.of()));
+
+        assertThatThrownBy(() -> reservationService.create(client, request))
+                .isInstanceOf(DestinationOutOfCorridorException.class);
+    }
+
+    @Test
+    void shouldRejectCreationWhenGeoServiceIsUnavailable() {
+        AuthenticatedUser client = new AuthenticatedUser(7L, VoraRole.CLIENT, null);
+        when(geoClient.verifyDestination(any(VerifyDestinationRequest.class)))
+                .thenThrow(new GeoServiceUnavailableException("Django Geo indisponible", new RuntimeException("timeout")));
+
+        assertThatThrownBy(() -> reservationService.create(client, request))
+                .isInstanceOf(GeoServiceUnavailableException.class);
     }
 
     @Test

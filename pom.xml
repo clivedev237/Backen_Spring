@@ -19,6 +19,10 @@
 
     <properties>
         <java.version>17</java.version>
+        <!-- Testcontainers 1.19.8 (version gérée par le BOM Spring Boot 3.3.4) négocie une API Docker
+             1.32, refusée par les daemons récents (Docker >= 28 exige >= 1.40) : on force une version
+             récente pour que ReservationServiceApplicationTests (Testcontainers PostgreSQL) tourne. -->
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <dependencies>
