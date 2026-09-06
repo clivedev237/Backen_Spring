@@ -4,6 +4,7 @@ package com.vora.reservation.api.controller;
 import com.vora.reservation.api.dto.CreateReservationRequest;
 import com.vora.reservation.api.dto.ReservationResponse;
 import com.vora.reservation.api.mapper.ReservationMapper;
+import com.vora.reservation.application.service.DriveTripService;
 import com.vora.reservation.application.service.ReservationService;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.model.Reservation;
@@ -26,6 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReservationController {
     private final ReservationService reservationService;
+    private final DriveTripService driveTripService;
 
     /**
      * Création d'une réservation par un client (cadrage §13.1). Le client
@@ -64,4 +66,17 @@ public class ReservationController {
         return reservationService.list(requester, status, clientId, pageable)
                 .map(ReservationMapper::toResponse);
     }
+
+    /**
+     * Confirmation d'arrivée par le passager (cadrage §13, §6 étape 11).
+     * Seul le client propriétaire de la réservation peut confirmer sa propre
+     * arrivée. Libère la place occupée dans le Turn et relance activement le
+     * matching pour ce chauffeur (cadrage §5.1).
+     */
+    @PostMapping("/{id}/arrival")
+    public ReservationResponse confirmArrival(@AuthenticationPrincipal AuthenticatedUser requester,
+                                              @PathVariable UUID id) {
+        return ReservationMapper.toResponse(driveTripService.confirmArrival(requester, id));
+    }
+
 }

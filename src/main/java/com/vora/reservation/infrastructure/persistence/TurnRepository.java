@@ -32,11 +32,7 @@ public interface TurnRepository extends JpaRepository<Turn, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Turn t where t.driverId = :driverId and t.status in :statuses")
     Optional<Turn> findByDriverIdAndStatusInForUpdate(@Param("driverId") Long driverId,
-                                                       @Param("statuses") List<TurnStatus> statuses);
+                                                      @Param("statuses") List<TurnStatus> statuses);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select t from Turn t where t.status in :statuses and t.driverId = :driverId")
-    Optional<Turn> findByIdForUpdateNeed(@Param("statuses") List<TurnStatus> statuses,
-                                          @Param("driverId") Long driverId);
 }
 

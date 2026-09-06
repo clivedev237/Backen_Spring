@@ -2,6 +2,7 @@
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/GlobalExceptionHandler.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/WebConfig.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/controller/DriverOfferController.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/controller/DriverTripController.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/controller/ReservationController.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/dto/CreateReservationRequest.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/dto/DestinationDto.java
@@ -16,9 +17,15 @@
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/GeoServiceUnavailableException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/OfferAlreadyResolvedException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/OfferExpiredException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/OfferNotAddressedToThisDriverException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/OfferNotFoundException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/ReservationNotAcceptedException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/ReservationNotFoundException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/ReservationNotStartedException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/ReservationOfferNotFoundException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/TurnFullException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/TurnNotFoundException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/service/DriveTripService.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/service/OfferService.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/service/ReservationService.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/domain/enums/OfferStatus.java

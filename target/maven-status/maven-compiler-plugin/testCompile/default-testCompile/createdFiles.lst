@@ -1,3 +1,4 @@
+com/vora/reservation/application/DriveTripServiceTest.class
 com/vora/reservation/client/geo/DjangoGeoClientTest.class
 com/vora/reservation/ReservationServiceApplicationTests.class
 com/vora/reservation/api/ReservationControllerTest.class

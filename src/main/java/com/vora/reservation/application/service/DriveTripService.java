@@ -1,12 +1,12 @@
 package com.vora.reservation.application.service;
 
+
 import com.vora.reservation.application.exception.ForbiddenOperationException;
 import com.vora.reservation.application.exception.OfferNotFoundException;
 import com.vora.reservation.application.exception.OfferNotAddressedToThisDriverException;
 import com.vora.reservation.application.exception.ReservationNotAcceptedException;
 import com.vora.reservation.application.exception.ReservationNotStartedException;
 import com.vora.reservation.application.exception.ReservationNotFoundException;
-import com.vora.reservation.application.exception.TurnNotFoundException;
 import com.vora.reservation.domain.enums.OfferStatus;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.enums.TurnStatus;
@@ -29,7 +29,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+
 public class DriveTripService {
+
 
     private final TurnRepository turnRepository;
     private final ReservationRepository reservationRepository;
@@ -92,6 +94,9 @@ public class DriveTripService {
         reservation.start();
         reservationRepository.save(reservation);
 
+        turn.startBoarding();
+        turnRepository.save(turn);
+
         log.info("Chauffeur {} a démarré la course {} (Turn {})", requester.driverId(), reservationId, turn.getId());
         return reservation;
     }
@@ -127,12 +132,19 @@ public class DriveTripService {
         Turn turn = reservation.getTurn();
         if (turn != null) {
             turn.releaseSeat();
-            turnRepository.save(turn);
 
             log.info("Passager {} a confirmé l'arrivée (Turn {}, charge libérée: {})",
                     reservationId, turn.getId(), turn.getCurrentLoad());
 
-            relaunchMatchingForDriver(turn.getDriverId());
+            boolean candidateFound = relaunchMatchingForDriver(turn.getDriverId());
+
+            // Cadrage §6, étape 14 : clôture uniquement si plus personne à bord
+            // ET aucun nouveau candidat compatible trouvé lors de la relance.
+            if (turn.getCurrentLoad() == 0 && !candidateFound) {
+                turn.close();
+            }
+
+            turnRepository.save(turn);
         } else {
             log.warn("Réservation confirmée sans Turn associé ({} )", reservationId);
         }
@@ -149,36 +161,41 @@ public class DriveTripService {
      * avec Django Geo ; pour l'instant, elle se base sur les réservations
      * en attente compatibles spatialement.
      */
-    private void relaunchMatchingForDriver(Long driverId) {
+    private boolean relaunchMatchingForDriver(Long driverId) {
         Turn currentTurn = turnRepository.findByDriverIdAndStatusInForUpdate(
-                driverId, List.of(TurnStatus.OUVERT, TurnStatus.COMPLET, TurnStatus.EN_COURS))
+                        driverId, List.of(TurnStatus.OUVERT, TurnStatus.COMPLET, TurnStatus.EN_COURS))
                 .orElse(null);
 
         if (currentTurn == null) {
             log.debug("Aucun Turn actif pour le chauffeur {} lors de la relance matching", driverId);
-            return;
+            return false;
         }
 
         if (!currentTurn.hasFreeSeat()) {
             log.debug("Turn {} est complet, pas de relance de matching nécessaire", currentTurn.getId());
-            return;
+            return false;
         }
 
         List<Reservation> pendingCandidates = reservationRepository.findByStatus(ReservationStatus.EN_ATTENTE);
 
         if (pendingCandidates.isEmpty()) {
             log.debug("Aucune réservation EN_ATTENTE à réattribuer pour le chauffeur {}", driverId);
-            return;
+            return false;
         }
 
-        // Pour l'instant, on diffuserait l'offre via OfferService ; à connecter
-        // avec le contrat réel de vérification spatiale dès que disponible.
+        // TODO (bloquant, cf. ReservationService) : cette sélection ignore la
+        // compatibilité spatiale réelle (verify-destination / optimize/turn côté
+        // Django Geo, cadrage §5.1 étape 11 bis) tant que le contrat exact n'est
+        // pas clarifié avec l'équipe Django. En l'état, elle diffuse au premier
+        // candidat EN_ATTENTE sans garantie qu'il soit dans le corridor de ce
+        // chauffeur — à ne pas considérer comme la relance de matching finale.
         log.info("Relance de matching pour le chauffeur {} ({} réservation(s) en attente compatibles)",
                 driverId, pendingCandidates.size());
 
         Reservation firstCandidate = pendingCandidates.get(0);
         List<Long> candidateDriverIds = List.of(driverId);
         offerService.diffuseOffers(firstCandidate, candidateDriverIds);
+        return true;
     }
 
     // ---------- Helper ----------
@@ -188,4 +205,5 @@ public class DriveTripService {
             throw new ForbiddenOperationException(message);
         }
     }
+
 }

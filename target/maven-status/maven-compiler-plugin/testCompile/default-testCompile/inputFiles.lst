@@ -1,5 +1,6 @@
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/test/java/com/vora/reservation/ReservationServiceApplicationTests.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/test/java/com/vora/reservation/api/ReservationControllerTest.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/test/java/com/vora/reservation/application/DriveTripServiceTest.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/test/java/com/vora/reservation/application/OfferServiceTest.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/test/java/com/vora/reservation/application/ReservationServiceTest.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/test/java/com/vora/reservation/client/geo/DjangoGeoClientTest.java
