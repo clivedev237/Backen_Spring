@@ -1,10 +1,7 @@
 package com.vora.reservation.api;
 
 import com.vora.reservation.api.dto.ErrorResponse;
-import com.vora.reservation.application.exception.DestinationOutOfCorridorException;
-import com.vora.reservation.application.exception.ForbiddenOperationException;
-import com.vora.reservation.application.exception.GeoServiceUnavailableException;
-import com.vora.reservation.application.exception.ReservationNotFoundException;
+import com.vora.reservation.application.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,5 +50,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
                 ErrorResponse.of(HttpStatus.SERVICE_UNAVAILABLE.value(), "Service Unavailable", ex.getMessage(),
                         request.getRequestURI()));
+    }
+    @ExceptionHandler(ReservationOfferNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOfferNotFound(ReservationOfferNotFoundException ex,
+                                                             HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** COURSE_DEJA_ATTRIBUEE (cadrage §8.1) : un autre chauffeur a déjà gagné. */
+    @ExceptionHandler(OfferAlreadyResolvedException.class)
+    public ResponseEntity<ErrorResponse> handleOfferAlreadyResolved(OfferAlreadyResolvedException ex,
+                                                                    HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ErrorResponse.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** OFFRE_EXPIREE : délai de 5 minutes dépassé (vérification paresseuse, Phase 5). */
+    @ExceptionHandler(OfferExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleOfferExpired(OfferExpiredException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.GONE).body(
+                ErrorResponse.of(HttpStatus.GONE.value(), "Gone", ex.getMessage(), request.getRequestURI()));
+    }
+
+    /** TURN_COMPLET : la dernière place a été prise entre-temps par une autre acceptation. */
+    @ExceptionHandler(TurnFullException.class)
+    public ResponseEntity<ErrorResponse> handleTurnFull(TurnFullException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ErrorResponse.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI()));
     }
 }

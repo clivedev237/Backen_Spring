@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.vora.reservation.ReservationServiceApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 104.6 s -- in com.vora.reservation.ReservationServiceApplicationTests
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 74.91 s -- in com.vora.reservation.ReservationServiceApplicationTests

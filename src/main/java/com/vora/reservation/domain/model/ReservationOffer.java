@@ -72,4 +72,7 @@ public class ReservationOffer {
             this.status = OfferStatus.INVALIDEE;
         }
     }
+    public void decline() {
+        this.status = OfferStatus.REFUSEE;
+    }
 }

@@ -134,4 +134,10 @@ public class Reservation {
         return this.turn != null
                 && (status == ReservationStatus.ACCEPTEE || status == ReservationStatus.EN_COURS);
     }
+
+    public void diffuse() {
+        if (this.status == ReservationStatus.EN_ATTENTE) {
+            this.status = ReservationStatus.DIFFUSEE;
+        }
+    }
 }
