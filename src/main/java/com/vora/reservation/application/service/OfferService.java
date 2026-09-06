@@ -26,6 +26,10 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.vora.reservation.infrastructure.notification.NotificationService;
+import com.vora.reservation.infrastructure.notification.dto.NotificationEvent;
+import com.vora.reservation.infrastructure.notification.dto.NotificationEventType;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -33,6 +37,7 @@ public class OfferService {
     private final ReservationOfferRepository offerRepository;
     private final ReservationRepository reservationRepository;
     private final TurnRepository turnRepository;
+    private final NotificationService notificationService;
 
     /**
      * Diffuse une offre à chaque chauffeur candidat (cadrage §6, étape 5).
@@ -56,6 +61,11 @@ public class OfferService {
         reservationRepository.save(reservation);
 
         log.info("Réservation {} diffusée à {} chauffeur(s) candidat(s)", reservation.getId(), offers.size());
+
+        // Phase 9 : notification webhook front — réservation disponible pour un chauffeur.
+        notificationService.send(
+                NotificationEvent.of(NotificationEventType.RESERVATION_AVAILABLE, reservation.getId()));
+
         return offers;
     }
 
@@ -210,6 +220,9 @@ public class OfferService {
 
         log.info("Offre {} acceptée par le chauffeur {} — réservation {} insérée dans le Turn {} (position {})",
                 offerId, requester.driverId(), reservationId, turn.getId(), sequenceIndex);
+
+        // Phase 9 : notification webhook front — réservation assignée à un chauffeur.
+        notificationService.notifyReservationAssigned(reservationId, requester.driverId(), turn.getId());
 
         return reservation;
 
