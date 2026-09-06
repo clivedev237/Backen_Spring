@@ -9,6 +9,7 @@ import com.vora.reservation.domain.enums.PaymentMethod;
 import com.vora.reservation.domain.model.Reservation;
 import com.vora.reservation.infrastructure.security.GatewayHeaderAuthenticationFilter;
 import com.vora.reservation.infrastructure.security.SecurityConfig;
+import com.vora.reservation.application.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -47,6 +48,9 @@ class ReservationControllerTest {
 
     @MockBean
     private DriveTripService driveTripService;
+
+    @MockBean
+    private PaymentService paymentService;
 
     private Reservation sampleReservation() {
         return Reservation.create(7L,

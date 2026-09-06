@@ -67,6 +67,15 @@ public class Reservation {
     @Column(name = "payment_method", nullable = false, length = 20)
     private PaymentMethod paymentMethod;
 
+    /**
+     * Référence de paiement locale (1--1). Créée à l'initiation du paiement
+     * (Phase 8), mise à jour en lecture/écriture lorsque le statut est connu.
+     * La source de vérité reste Node Auth & Payment.
+     */
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "payment_reference_id", unique = true)
+    private PaymentReference paymentReference;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private ReservationStatus status = ReservationStatus.EN_ATTENTE;
@@ -118,6 +127,29 @@ public class Reservation {
     public void confirmArrival() {
         this.status = ReservationStatus.ARRIVEE_CONFIRMEE;
         this.arrivedAt = OffsetDateTime.now();
+    }
+
+    /**
+     * Migration vers le statut de paiement en cours. À appeler après
+     * confirmation d'arrivée et initiation du paiement chez Node.
+     */
+    public void startPayment() {
+        this.status = ReservationStatus.PAIEMENT_EN_COURS;
+    }
+
+    /**
+     * Clôture du paiement avec succès.
+     */
+    public void markPaymentSucceeded() {
+        this.status = ReservationStatus.TERMINEE;
+    }
+
+    /**
+     * Échec du paiement (ex. OTP rejeté, expiration, refus). Statut de
+     * réservation PAIEMENT_ECHOUE.
+     */
+    public void markPaymentFailed() {
+        this.status = ReservationStatus.PAIEMENT_ECHOUE;
     }
 
     /**

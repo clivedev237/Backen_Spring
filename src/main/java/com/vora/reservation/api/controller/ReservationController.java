@@ -2,9 +2,12 @@ package com.vora.reservation.api.controller;
 
 
 import com.vora.reservation.api.dto.CreateReservationRequest;
+import com.vora.reservation.api.dto.InitiatePaymentResponseDto;
+import com.vora.reservation.api.dto.PaymentStatusResponseDto;
 import com.vora.reservation.api.dto.ReservationResponse;
 import com.vora.reservation.api.mapper.ReservationMapper;
 import com.vora.reservation.application.service.DriveTripService;
+import com.vora.reservation.application.service.PaymentService;
 import com.vora.reservation.application.service.ReservationService;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.model.Reservation;
@@ -28,6 +31,7 @@ import java.util.UUID;
 public class ReservationController {
     private final ReservationService reservationService;
     private final DriveTripService driveTripService;
+    private final PaymentService paymentService;
 
     /**
      * Création d'une réservation par un client (cadrage §13.1). Le client
@@ -70,13 +74,56 @@ public class ReservationController {
     /**
      * Confirmation d'arrivée par le passager (cadrage §13, §6 étape 11).
      * Seul le client propriétaire de la réservation peut confirmer sa propre
-     * arrivée. Libère la place occupée dans le Turn et relance activement le
-     * matching pour ce chauffeur (cadrage §5.1).
+     * arrivée. Libère la place occupée dans le Turn, initie le paiement, et
+     * relance activement le matching pour ce chauffeur (cadrage §5.1, §6
+     * étapes 11/11bis/12).
      */
     @PostMapping("/{id}/arrival")
     public ReservationResponse confirmArrival(@AuthenticationPrincipal AuthenticatedUser requester,
                                               @PathVariable UUID id) {
         return ReservationMapper.toResponse(driveTripService.confirmArrival(requester, id));
+    }
+
+    /**
+     * Initiation du paiement pour une réservation dont l'arrivée est confirmée
+     * (cadrage §9.2, §13).
+     *
+     * <p>Déclenche le paiement chez Node Auth & Payment (MTN_MOMO / ORANGE_MONEY).
+     * Pour les espèces (ESPECES), utiliser {@code confirmCash} ci-dessous.
+     *
+     * <p>Idempotent : si le paiement était déjà initié, retourne le statut actuel.
+     */
+    @PostMapping("/{id}/payment")
+    public InitiatePaymentResponseDto initiatePayment(@AuthenticationPrincipal AuthenticatedUser requester,
+                                                     @PathVariable UUID id) {
+        return ReservationMapper.toInitiatePaymentResponseDto(
+                paymentService.initiatePayment(id));
+    }
+
+    /**
+     * Confirmation de remise en espèces (cadrage §9.2).
+     *
+     * <p>À utiliser lorsque le client a remis les espèces au chauffeur.
+     * Déclenche la confirmation chez Node Auth & Payment.
+     */
+    @PostMapping("/{id}/payment/cash-confirm")
+    public PaymentStatusResponseDto confirmCashPayment(@AuthenticationPrincipal AuthenticatedUser requester,
+                                                      @PathVariable UUID id) {
+        return ReservationMapper.toPaymentStatusResponseDto(
+                paymentService.confirmCashPayment(id));
+    }
+
+    /**
+     * Interrogation du statut d'un paiement déjà initié (cadrage §9.2).
+     *
+     * <p>Renvoie le dernier état connu, avec synchronisation locale depuis Node
+     * si l'identifiant externe est disponible.
+     */
+    @GetMapping("/{id}/payment")
+    public PaymentStatusResponseDto getPaymentStatus(@AuthenticationPrincipal AuthenticatedUser requester,
+                                                      @PathVariable UUID id) {
+        return ReservationMapper.toPaymentStatusResponseDto(
+                paymentService.queryStatus(id));
     }
 
 }

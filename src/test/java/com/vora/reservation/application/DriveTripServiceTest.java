@@ -10,6 +10,8 @@ import com.vora.reservation.application.exception.ReservationNotFoundException;
 import com.vora.reservation.application.exception.TurnNotFoundException;
 import com.vora.reservation.application.service.DriveTripService;
 import com.vora.reservation.application.service.OfferService;
+import com.vora.reservation.application.service.PaymentService;
+import com.vora.reservation.domain.model.PaymentReference;
 import com.vora.reservation.domain.enums.OfferStatus;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.enums.TurnStatus;
@@ -55,6 +57,8 @@ class DriveTripServiceTest {
     private ReservationOfferRepository reservationOfferRepository;
     @Mock
     private OfferService offerService;
+    @Mock
+    private PaymentService paymentService;
 
     @InjectMocks
     private DriveTripService driveTripService;
@@ -71,6 +75,7 @@ class DriveTripServiceTest {
         lenient().when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(turnRepository.save(any(Turn.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(reservationOfferRepository.save(any(ReservationOffer.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(paymentService.initiatePayment(any(UUID.class))).thenAnswer(inv -> null);
     }
 
     private Reservation reservationWithTurn(ReservationStatus status) {
@@ -180,12 +185,14 @@ class DriveTripServiceTest {
     @Test
     void shouldConfirmArrivalForOwnerAndReleaseSeat() {
         Reservation reservation = reservationWithTurn(ReservationStatus.EN_COURS);
+        reservation.setPaymentReference(new PaymentReference());
 
         Reservation result = driveTripService.confirmArrival(client, reservation.getId());
 
         assertThat(result.getStatus()).isEqualTo(ReservationStatus.ARRIVEE_CONFIRMEE);
         assertThat(result.getArrivedAt()).isNotNull();
         verify(turnRepository).save(any(Turn.class));
+        verify(paymentService).initiatePayment(reservation.getId());
     }
 
     @Test
