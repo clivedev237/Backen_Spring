@@ -1,5 +1,6 @@
 package com.vora.reservation.infrastructure.persistence;
 import com.vora.reservation.domain.enums.ReservationStatus;
+import com.vora.reservation.domain.model.PaymentReference;
 import com.vora.reservation.domain.model.Reservation;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
      * (premier chauffeur gagnant, cadrage §8.1).
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select r from Reservation r where r.id = :id")
+    @Query("select r from Reservation r left join fetch r.paymentReference where r.id = :id")
     Optional<Reservation> findByIdForUpdate(@Param("id") UUID id);
+
+    @Query("SELECT pr FROM PaymentReference pr JOIN pr.reservation r WHERE r.id = :reservationId")
+    Optional<PaymentReference> findPaymentReferenceByReservationId(@Param("reservationId") UUID reservationId);
 }

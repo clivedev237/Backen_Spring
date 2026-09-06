@@ -23,7 +23,7 @@ import java.util.UUID;
 @Table(name = "payment_reference")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class PaymentReference {
 
     @Id
@@ -69,5 +69,16 @@ public class PaymentReference {
 
     public void markFailed() {
         this.status = PaymentRefStatus.ECHOUE;
+    }
+
+    /**
+     * Mise à jour du statut depuis Node Auth & Payment (source de vérité).
+     * À utiliser lors de l'interrogation ou du webhook de confirmation.
+     */
+    public void syncStatus(PaymentRefStatus status, String externalPaymentId) {
+        if (externalPaymentId != null) {
+            this.paymentId = externalPaymentId;
+        }
+        this.status = status;
     }
 }

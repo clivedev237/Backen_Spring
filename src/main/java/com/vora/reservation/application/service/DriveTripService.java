@@ -4,6 +4,7 @@ package com.vora.reservation.application.service;
 import com.vora.reservation.application.exception.ForbiddenOperationException;
 import com.vora.reservation.application.exception.OfferNotFoundException;
 import com.vora.reservation.application.exception.OfferNotAddressedToThisDriverException;
+import com.vora.reservation.application.exception.PaymentNotInitiatedException;
 import com.vora.reservation.application.exception.ReservationNotAcceptedException;
 import com.vora.reservation.application.exception.ReservationNotStartedException;
 import com.vora.reservation.application.exception.ReservationNotFoundException;
@@ -32,11 +33,11 @@ import java.util.UUID;
 
 public class DriveTripService {
 
-
     private final TurnRepository turnRepository;
     private final ReservationRepository reservationRepository;
     private final ReservationOfferRepository reservationOfferRepository;
     private final OfferService offerService;
+    private final PaymentService paymentService;
 
     // ---------- Start (chauffeur affecté uniquement) ----------
 
@@ -106,7 +107,14 @@ public class DriveTripService {
     /**
      * Confirmation d'arrivée par le client propriétaire de la réservation.
      * Seule une réservation EN_COURS peut être confirmée.
-     * Cela libère une place dans le Turn et déclenche la relance active du matching.
+     * Cela libère une place dans le Turn, initie le paiement, puis relance
+     * activement le matching pour ce chauffeur (cadrage §6 étapes 11/11bis/12,
+     * §5.1).
+     *
+     * <p>Le paiement est initié AVANT la relance de matching car c'est l'étape 12
+     * du workflow. Si Node Auth & Payment est indisponible, on logue l'incident
+     * et on marque la réservation PAIEMENT_ECHOUE en local pour ne pas laisser
+     * la réservation durablement dans un statut PAIEMENT_EN_COURS sans issue.
      */
     @Transactional
     public Reservation confirmArrival(AuthenticatedUser requester, UUID reservationId) {
@@ -136,9 +144,13 @@ public class DriveTripService {
             log.info("Passager {} a confirmé l'arrivée (Turn {}, charge libérée: {})",
                     reservationId, turn.getId(), turn.getCurrentLoad());
 
+            // Étape 12 : initiation du paiement AVANT la relance de matching.
+            initiatePaymentSilently(reservationId);
+
+            // Étape 11bis : relance active du matching.
             boolean candidateFound = relaunchMatchingForDriver(turn.getDriverId());
 
-            // Cadrage §6, étape 14 : clôture uniquement si plus personne à bord
+            // Étape 14 : clôture uniquement si plus personne à bord
             // ET aucun nouveau candidat compatible trouvé lors de la relance.
             if (turn.getCurrentLoad() == 0 && !candidateFound) {
                 turn.close();
@@ -147,6 +159,8 @@ public class DriveTripService {
             turnRepository.save(turn);
         } else {
             log.warn("Réservation confirmée sans Turn associé ({} )", reservationId);
+            // Sans Turn, pas de relance possible ; on initie quand même le paiement.
+            initiatePaymentSilently(reservationId);
         }
 
         return reservation;
@@ -196,6 +210,47 @@ public class DriveTripService {
         List<Long> candidateDriverIds = List.of(driverId);
         offerService.diffuseOffers(firstCandidate, candidateDriverIds);
         return true;
+    }
+
+    // ---------- Paiement (Phase 8) ----------
+
+    /**
+     * Initiation silencieuse du paiement après arrivée confirmée.
+     *
+     * <p>En cas d'indisponibilité de Node Auth & Payment, on logue l'erreur et
+     * on marque la réservation PAIEMENT_ECHOUE localement pour ne pas laisser
+     * la réservation bloquée en PAIEMENT_EN_COURS sans issue.
+     * Le client pourra retenter manuellement via POST
+     * /api/v1/reservations/{id}/payment.
+     */
+    private void initiatePaymentSilently(UUID reservationId) {
+        try {
+            paymentService.initiatePayment(reservationId);
+        } catch (PaymentNotInitiatedException e) {
+            log.warn("Paiement non initié pour réservation {} : {}", reservationId, e.getMessage());
+        } catch (Exception e) {
+            log.error("Échec initiation paiement réservation {} (Node indisponible ou erreur) : {}",
+                    reservationId, e.getMessage());
+            markPaymentFailedLocally(reservationId);
+        }
+    }
+
+    /**
+     * Marque localement la réservation comme PAIEMENT_ECHOUE sans appeler Node.
+     * À utiliser quand le paiement ne peut pas être initié.
+     */
+    private void markPaymentFailedLocally(UUID reservationId) {
+        try {
+            Reservation reservation = reservationRepository.findByIdForUpdate(reservationId).orElse(null);
+            if (reservation != null
+                    && reservation.getStatus() == ReservationStatus.ARRIVEE_CONFIRMEE) {
+                reservation.markPaymentFailed();
+                reservationRepository.save(reservation);
+                log.info("Paiement marqué ÉCHOUÉ localement pour réservation {} (initiation impossible)", reservationId);
+            }
+        } catch (Exception e) {
+            log.error("Échec marquage échec local réservation {} : {}", reservationId, e.getMessage());
+        }
     }
 
     // ---------- Helper ----------
