@@ -32,8 +32,8 @@ public class PaymentClientConfig {
     @Bean
     public RestClient paymentRestClient(RestClient.Builder builder,
                                         @Value("${vora.auth-payment.base-url}") String baseUrl,
-                                        @Value("${vora.geo.connect-timeout-ms:2000}") long connectTimeoutMs,
-                                        @Value("${vora.geo.read-timeout-ms:3000}") long readTimeoutMs) {
+                                        @Value("${vora.auth-payment.connect-timeout-ms:2000}") long connectTimeoutMs,
+                                        @Value("${vora.auth-payment.read-timeout-ms:5000}") long readTimeoutMs) {
         ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
                 .withConnectTimeout(Duration.ofMillis(connectTimeoutMs))
                 .withReadTimeout(Duration.ofMillis(readTimeoutMs));

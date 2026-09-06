@@ -11,9 +11,9 @@ spring:
     # voir VORA_Shared_Database_Guide.md. Il n'y a PAS de schéma dédié par service :
     # toutes les tables vivent dans le schéma "public" de la même instance Render.
     # SPRING_DATASOURCE_URL et DATABASE_URL (Django/Node) pointent vers la même instance.
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vora?sslmode=disable}
-    username: ${SPRING_DATASOURCE_USERNAME:vora}
-    password: ${SPRING_DATASOURCE_PASSWORD:vora}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vora_db}
+    username: ${SPRING_DATASOURCE_USERNAME:vora_db_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:your_password_here}
 
   jpa:
     hibernate:
@@ -29,7 +29,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0   # CORRECTIF : baseline par défaut = 1, identique à V1__init_schema.sql,
-      # ce qui faisait sauter son exécution (tables jamais créées). Avec 0,
+    # ce qui faisait sauter son exécution (tables jamais créées). Avec 0,
     # le point de baseline est AVANT V1, qui s'exécute donc réellement.
     # Flyway ne gère QUE ses propres tables (turn, reservation_offer, payment_reference,
     # reservations) dans le schéma public partagé ; il ne touche jamais aux tables
@@ -45,6 +45,19 @@ vora:
     read-timeout-ms: ${VORA_GEO_READ_TIMEOUT_MS:3000}
   auth-payment:
     base-url: ${VORA_AUTH_PAYMENT_BASE_URL:http://localhost:8082}
+    # Timeouts dédiés à Node Auth & Payment : plus longs que Django Geo car
+    # l'appel /initiate peut relayer un appel à l'agrégateur Soleaspay.
+    connect-timeout-ms: ${VORA_AUTH_PAYMENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${VORA_AUTH_PAYMENT_READ_TIMEOUT_MS:5000}
+  notification:
+    # Webhook endpoint du frontend (ou service de notification dédié) pour la
+    # diffusion des événements métier côté client (Phase 9, canal = webhook front).
+    # À configurer en production sur Render (Settings → Environment) avec
+    # VORA_NOTIFICATION_WEBHOOK_URL.
+    webhook-url: ${VORA_NOTIFICATION_WEBHOOK_URL:http://localhost:3000/api/v1/notifications}
+    connect-timeout-ms: ${VORA_NOTIFICATION_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${VORA_NOTIFICATION_READ_TIMEOUT_MS:3000}
+    max-retries: ${VORA_NOTIFICATION_MAX_RETRIES:3}
   matching:
     offer-ttl-minutes: 5   # durée de validité d'une offre chauffeur (confirmé)
   turn:

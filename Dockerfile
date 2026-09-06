@@ -1,16 +1,15 @@
-# --- Build ---
-FROM maven:3.9-eclipse-temurin-17 AS build
+# Stage 1: Build
+FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
 COPY pom.xml .
-RUN mvn -B dependency:go-offline
 COPY src ./src
-RUN mvn -B clean package -DskipTests
+# Faster first build: download dependencies before copying source
+RUN ./mvnw dependency:go-offline -B || true
+RUN ./mvnw package -DskipTests -B
 
-# --- Runtime ---
+# Stage 2: Runtime
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/reservation-service-*.jar app.jar
-
-# Render impose le port via la variable d'environnement PORT (voir application.yml)
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
