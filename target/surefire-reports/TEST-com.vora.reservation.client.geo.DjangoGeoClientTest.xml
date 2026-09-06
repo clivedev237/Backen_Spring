@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.vora.reservation.ReservationServiceApplicationTests" time="38.763" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.vora.reservation.client.geo.DjangoGeoClientTest" time="0.062" tests="4" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -65,75 +65,14 @@
     <property name="java.class.version" value="61.0"/>
     <property name="LOGGED_APPLICATION_NAME" value="[vora-reservation-service] "/>
   </properties>
-  <testcase name="contextLoads" classname="com.vora.reservation.ReservationServiceApplicationTests" time="0.326">
-    <system-out><![CDATA[09:58:58.013 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
-09:58:58.016 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
-09:58:58.028 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.4
-09:58:58.107 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
-09:58:58.422 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
-09:58:58.423 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
-09:58:58.432 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
-  Server Version: 29.6.1
-  API Version: 1.55
-  Operating System: Ubuntu Core 24
-  Total Memory: 15674 MB
-09:58:58.446 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
-09:58:58.449 [main] INFO org.testcontainers.utility.RegistryAuthLocator -- Failure when attempting to lookup auth config. Please ignore if you don't have images in an authenticated registry. Details: (dockerImageName: testcontainers/ryuk:0.12.0, configFile: /home/antoninmassem/.docker/config.json, configEnv: DOCKER_AUTH_CONFIG). Falling back to docker-java default behaviour. Exception message: Status 404: No config supplied. Checked in order: /home/antoninmassem/.docker/config.json (file not found), DOCKER_AUTH_CONFIG (not set)
-09:59:00.252 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: aff5b53df9a661c01e9a30c1432aad0049becc8e224cec0d3d8e608730b36e26
-09:59:01.373 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT2.92675744S
-09:59:01.377 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
-09:59:01.377 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
-09:59:01.377 [main] INFO org.testcontainers.DockerClientFactory -- ✔︎ Docker server version should be at least 1.6.0
-09:59:01.377 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
-09:59:03.336 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: 881fcc9205f6af2627f6a37b84c2ba03a5150af7cc929ca8f6bc02dd8cae0689
-09:59:10.734 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT9.356328538S
-09:59:10.734 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://localhost:32781/vora?loggerLevel=OFF)
-09:59:10.739 [main] INFO org.testcontainers.ext.ScriptUtils -- Executing database script from db/users-stub.sql
-09:59:10.841 [main] INFO org.testcontainers.ext.ScriptUtils -- Executed database script from db/users-stub.sql in 101 ms.
-09:59:10.892 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.vora.reservation.ReservationServiceApplicationTests]: ReservationServiceApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-09:59:10.938 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.vora.reservation.ReservationServiceApplication for test class com.vora.reservation.ReservationServiceApplicationTests
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-
- :: Spring Boot ::                (v3.3.4)
-
-2026-09-06T09:59:11.139+01:00  INFO 1806452 --- [vora-reservation-service] [           main] c.v.r.ReservationServiceApplicationTests : Starting ReservationServiceApplicationTests using Java 17.0.20 with PID 1806452 (started by antoninmassem in /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service)
-2026-09-06T09:59:11.140+01:00  INFO 1806452 --- [vora-reservation-service] [           main] c.v.r.ReservationServiceApplicationTests : No active profile set, falling back to 1 default profile: "default"
-2026-09-06T09:59:11.702+01:00  INFO 1806452 --- [vora-reservation-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-09-06T09:59:11.735+01:00  INFO 1806452 --- [vora-reservation-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 29 ms. Found 4 JPA repository interfaces.
-2026-09-06T09:59:12.108+01:00  INFO 1806452 --- [vora-reservation-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-09-06T09:59:12.125+01:00  INFO 1806452 --- [vora-reservation-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@3cfab340
-2026-09-06T09:59:12.126+01:00  INFO 1806452 --- [vora-reservation-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-09-06T09:59:12.143+01:00  INFO 1806452 --- [vora-reservation-service] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:32781/vora (PostgreSQL 16.13)
-2026-09-06T09:59:12.162+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
-2026-09-06T09:59:12.164+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 1 migration (execution time 00:00.008s)
-2026-09-06T09:59:12.173+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" with baseline ...
-2026-09-06T09:59:12.193+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.core.internal.command.DbBaseline     : Successfully baselined schema with version: 0
-2026-09-06T09:59:12.212+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 0
-2026-09-06T09:59:12.222+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - init schema"
-2026-09-06T09:59:12.423+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 1 migration to schema "public", now at version v1 (execution time 00:00.190s)
-2026-09-06T09:59:12.484+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-09-06T09:59:12.509+01:00  INFO 1806452 --- [vora-reservation-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
-2026-09-06T09:59:12.525+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-09-06T09:59:12.669+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-09-06T09:59:13.399+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-09-06T09:59:13.419+01:00  INFO 1806452 --- [vora-reservation-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-09-06T09:59:13.627+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-09-06T09:59:14.008+01:00  WARN 1806452 --- [vora-reservation-service] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
-
-Using generated security password: 443e54f2-f8a9-43d6-bbb0-120b8edaa04d
-
-This generated password is for development use only. Your security configuration must be updated before running your application in production.
-
-2026-09-06T09:59:14.016+01:00  INFO 1806452 --- [vora-reservation-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2026-09-06T09:59:14.221+01:00  INFO 1806452 --- [vora-reservation-service] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
-2026-09-06T09:59:15.150+01:00  INFO 1806452 --- [vora-reservation-service] [           main] c.v.r.ReservationServiceApplicationTests : Started ReservationServiceApplicationTests in 4.146 seconds (process running for 17.492)
+  <testcase name="shouldReturnValidWithNoCompatibleCorridorWhenNoDriverAvailable" classname="com.vora.reservation.client.geo.DjangoGeoClientTest" time="0.043"/>
+  <testcase name="shouldThrowGeoServiceUnavailableOnServerError" classname="com.vora.reservation.client.geo.DjangoGeoClientTest" time="0.006">
+    <system-out><![CDATA[2026-09-06T09:59:37.007+01:00  WARN 1806452 --- [vora-reservation-service] [           main] c.v.r.i.client.geo.DjangoGeoClient       : Appel à Django Geo (/api/v1/geo/verify-destination) en échec : 500 Internal Server Error: [no body]
 ]]></system-out>
   </testcase>
-  <testcase name="shouldPersistTurnAndReservation" classname="com.vora.reservation.ReservationServiceApplicationTests" time="0.122"/>
+  <testcase name="shouldThrowGeoServiceUnavailableOnConnectionFailure" classname="com.vora.reservation.client.geo.DjangoGeoClientTest" time="0.003">
+    <system-out><![CDATA[2026-09-06T09:59:37.011+01:00  WARN 1806452 --- [vora-reservation-service] [           main] c.v.r.i.client.geo.DjangoGeoClient       : Appel à Django Geo (/api/v1/geo/verify-destination) en échec : I/O error on POST request for "http://geo.test/api/v1/geo/verify-destination": connexion refusée (simulation)
+]]></system-out>
+  </testcase>
+  <testcase name="shouldReturnCompatibleCorridorsWhenDestinationIsValid" classname="com.vora.reservation.client.geo.DjangoGeoClientTest" time="0.006"/>
 </testsuite>

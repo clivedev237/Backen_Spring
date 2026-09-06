@@ -8,7 +8,9 @@
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/dto/PickupLocationDto.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/dto/ReservationResponse.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/api/mapper/ReservationMapper.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/DestinationOutOfCorridorException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/ForbiddenOperationException.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/GeoServiceUnavailableException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/exception/ReservationNotFoundException.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/application/service/ReservationService.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/domain/enums/OfferStatus.java
@@ -20,6 +22,12 @@
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/domain/model/Reservation.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/domain/model/ReservationOffer.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/domain/model/Turn.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/client/geo/DjangoGeoClient.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/client/geo/GeoClient.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/client/geo/GeoClientConfig.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/client/geo/dto/GeoPoint.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/client/geo/dto/VerifyDestinationRequest.java
+/home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/client/geo/dto/VerifyDestinationResponse.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/persistence/PaymentReferenceRepository.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/persistence/ReservationOfferRepository.java
 /home/antoninmassem/Vidéos/vora-reservation-service/vora-reservation-service/src/main/java/com/vora/reservation/infrastructure/persistence/ReservationRepository.java

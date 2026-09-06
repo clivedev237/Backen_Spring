@@ -31,7 +31,10 @@ class ReservationServiceApplicationTests {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("vora")
             .withUsername("vora")
-            .withPassword("vora");
+            .withPassword("vora")
+            // La table partagée "users" (propriété Django/Node) n'existe pas sur une base jetable ;
+            // on y pose un stub minimal avant les migrations Flyway (voir db/users-stub.sql).
+            .withInitScript("db/users-stub.sql");
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
