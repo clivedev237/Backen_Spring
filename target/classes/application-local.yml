@@ -1,0 +1,6 @@
+# Profil de développement local — NE JAMAIS committer ce fichier avec le vrai mot de passe.
+spring:
+  datasource:
+    url: jdbc:postgresql://dpg-dae8ef740ujc73e88etg-a.frankfurt-postgres.render.com:5432/voora_db?sslmode=require
+    username: voora_db_user
+    password: bp35rM22nPe5WooquPkVZWDk5kCMtbWj

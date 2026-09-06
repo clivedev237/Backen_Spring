@@ -1,0 +1,42 @@
+                      Liste des tables
+ Schéma |            Nom             | Type  | Propriétaire  
+--------+----------------------------+-------+---------------
+ public | audit_logs                 | table | voora_db_user
+ public | auth_group                 | table | voora_db_user
+ public | auth_group_permissions     | table | voora_db_user
+ public | auth_permission            | table | voora_db_user
+ public | auth_user                  | table | voora_db_user
+ public | auth_user_groups           | table | voora_db_user
+ public | auth_user_user_permissions | table | voora_db_user
+ public | carrefours                 | table | voora_db_user
+ public | clients                    | table | voora_db_user
+ public | congestion_snapshots       | table | voora_db_user
+ public | demand_cache               | table | voora_db_user
+ public | django_admin_log           | table | voora_db_user
+ public | django_content_type        | table | voora_db_user
+ public | django_migrations          | table | voora_db_user
+ public | django_session             | table | voora_db_user
+ public | driver_locations           | table | voora_db_user
+ public | driver_trajectories        | table | voora_db_user
+ public | flyway_schema_history      | table | voora_db_user
+ public | historique_activite        | table | voora_db_user
+ public | jwt_blacklist              | table | voora_db_user
+ public | notifications              | table | voora_db_user
+ public | optimization_runs          | table | voora_db_user
+ public | orders                     | table | voora_db_user
+ public | parametres                 | table | voora_db_user
+ public | password_reset_tokens      | table | voora_db_user
+ public | payment_links              | table | voora_db_user
+ public | refresh_tokens             | table | voora_db_user
+ public | roles                      | table | voora_db_user
+ public | routes                     | table | voora_db_user
+ public | signalements               | table | voora_db_user
+ public | spatial_ref_sys            | table | postgres
+ public | statistiques_journalieres  | table | voora_db_user
+ public | two_fa_otp_codes           | table | voora_db_user
+ public | two_fa_totp                | table | voora_db_user
+ public | users                      | table | voora_db_user
+ public | vehicles                   | table | voora_db_user
+ public | zones                      | table | voora_db_user
+(37 lignes)
+
