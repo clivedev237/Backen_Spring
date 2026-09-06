@@ -1,11 +1,14 @@
 com/vora/reservation/application/exception/ReservationNotFoundException.class
 com/vora/reservation/application/exception/GeoServiceUnavailableException.class
 com/vora/reservation/domain/enums/TurnStatus.class
+com/vora/reservation/infrastructure/realtime/DriverLocationPublisher$DriverLocationMessage.class
 com/vora/reservation/application/service/DriveTripService.class
 com/vora/reservation/ReservationServiceApplication.class
 com/vora/reservation/infrastructure/security/AuthenticatedUser.class
+com/vora/reservation/infrastructure/realtime/WebSocketConfig.class
 com/vora/reservation/infrastructure/client/geo/GeoClient.class
 com/vora/reservation/domain/enums/PaymentRefStatus.class
+com/vora/reservation/api/controller/DriverLocationController.class
 com/vora/reservation/infrastructure/security/SecurityConfig.class
 com/vora/reservation/domain/model/Turn.class
 com/vora/reservation/api/dto/CreateReservationRequest.class
@@ -15,6 +18,7 @@ com/vora/reservation/infrastructure/persistence/ReservationOfferRepository.class
 com/vora/reservation/api/controller/DriverOfferController.class
 com/vora/reservation/infrastructure/persistence/TurnRepository.class
 com/vora/reservation/api/dto/PickupLocationDto.class
+com/vora/reservation/infrastructure/realtime/DriverLocationPublisher.class
 com/vora/reservation/api/GlobalExceptionHandler.class
 com/vora/reservation/application/exception/TurnNotFoundException.class
 com/vora/reservation/domain/model/PaymentReference.class
@@ -42,6 +46,7 @@ com/vora/reservation/infrastructure/persistence/PaymentReferenceRepository.class
 com/vora/reservation/infrastructure/client/geo/GeoClientConfig.class
 com/vora/reservation/api/dto/ErrorResponse$FieldError.class
 com/vora/reservation/application/exception/ReservationNotAcceptedException.class
+com/vora/reservation/api/dto/DriverLocationRequest.class
 com/vora/reservation/domain/enums/PaymentMethod.class
 com/vora/reservation/application/exception/OfferAlreadyResolvedException.class
 com/vora/reservation/api/dto/DestinationDto.class
