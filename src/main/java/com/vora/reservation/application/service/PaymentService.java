@@ -86,16 +86,12 @@ public class PaymentService {
         }
 
         // Délégation à Node (MTN_MOMO / ORANGE_MONEY ; espèces via confirmCash).
-        InitiatePaymentRequest request = InitiatePaymentRequest.builder()
-                .amount(reservation.getProposedPrice())
-                .currency("XAF")
-                .language("fr")
-                .channel(null)
-                .paymentMethod(reservation.getPaymentMethod())
-                .internalReference(paymentReference.getId().toString())
-                .paymentLinkToken(null)
-                .description(null)
-                .build();
+        // BUG CORRIGÉ : l'ancien appel construisait la requête à la main et
+        // oubliait clientId, ce qui rendait Node incapable de savoir qui
+        // facturer. On utilise désormais le constructeur adjoint from(...),
+        // qui est la seule source de vérité pour ce mapping.
+        InitiatePaymentRequest request = InitiatePaymentRequest.from(
+                reservation, paymentReference.getId().toString(), null);
 
         InitiatePaymentResponse nodeResponse;
         try {
@@ -113,8 +109,7 @@ public class PaymentService {
                 ? nodeResponse.getId()
                 : null;
 
-        paymentReference.markSucceeded(externalPaymentId);
-        paymentReference.setStatus(PaymentRefStatus.EN_ATTENTE);
+        paymentReference.syncStatus(PaymentRefStatus.EN_ATTENTE, externalPaymentId);
         paymentReferenceRepository.save(paymentReference);
 
         // Migration du statut de réservation.

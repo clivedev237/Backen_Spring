@@ -24,6 +24,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.vora.reservation.infrastructure.notification.NotificationService;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -45,6 +47,8 @@ public class OfferServiceTest {
     private ReservationRepository reservationRepository;
     @Mock
     private TurnRepository turnRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private OfferService offerService;

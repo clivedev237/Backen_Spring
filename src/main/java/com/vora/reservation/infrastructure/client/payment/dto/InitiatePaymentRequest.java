@@ -17,6 +17,15 @@ import java.math.BigDecimal;
 @Builder
 public class InitiatePaymentRequest {
 
+    /**
+     * Référence logique vers le client (service Auth & Payment, table users).
+     * INDISPENSABLE : sans cet identifiant, Node ne peut pas savoir qui
+     * facturer, ni retrouver le numéro de téléphone à débiter (BUG corrigé :
+     * ce champ était absent du payload alors que PaymentClient l'envoie déjà
+     * à Node).
+     */
+    Long clientId;
+
     /** Montant à payer (CFA), recopié depuis proposed_price de la réservation. */
     BigDecimal amount;
 
@@ -49,6 +58,7 @@ public class InitiatePaymentRequest {
             String paymentReferenceId,
             String paymentLinkToken) {
         return InitiatePaymentRequest.builder()
+                .clientId(reservation.getClientId())
                 .amount(reservation.getProposedPrice())
                 .currency("XAF")
                 .language("fr")
@@ -56,7 +66,7 @@ public class InitiatePaymentRequest {
                 .paymentMethod(reservation.getPaymentMethod())
                 .internalReference(paymentReferenceId)
                 .paymentLinkToken(paymentLinkToken)
-                .description(null)
+                .description("Course VORA - réservation " + reservation.getId())
                 .build();
     }
 }
