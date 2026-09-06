@@ -23,4 +23,16 @@ public interface TurnRepository extends JpaRepository<Turn, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Turn t where t.id = :id")
     Optional<Turn> findByIdForUpdate(@Param("id") UUID id);
+
+    /**
+     * Retourne le Turn actif (OUVERT/COMPLET/EN_COURS) du chauffeur,
+     * avec verrou pessimiste pour éviter la création concurrente de deux
+     * Turns (limite connue Phase 5, à durcir par contrainte unique si besoin).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Turn t where t.driverId = :driverId and t.status in :statuses")
+    Optional<Turn> findByDriverIdAndStatusInForUpdate(@Param("driverId") Long driverId,
+                                                      @Param("statuses") List<TurnStatus> statuses);
+
 }
+

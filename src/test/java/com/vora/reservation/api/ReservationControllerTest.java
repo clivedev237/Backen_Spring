@@ -1,6 +1,7 @@
 package com.vora.reservation.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vora.reservation.api.controller.ReservationController;
+import com.vora.reservation.application.service.DriveTripService;
 import com.vora.reservation.application.service.ReservationService;
 import com.vora.reservation.application.exception.ForbiddenOperationException;
 import com.vora.reservation.application.exception.ReservationNotFoundException;
@@ -43,6 +44,9 @@ class ReservationControllerTest {
 
     @MockBean
     private ReservationService reservationService;
+
+    @MockBean
+    private DriveTripService driveTripService;
 
     private Reservation sampleReservation() {
         return Reservation.create(7L,
@@ -192,4 +196,31 @@ class ReservationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].clientId").value(7));
     }
+
+    @Test
+    void arrivalShouldReturn200ForOwner() throws Exception {
+        UUID id = UUID.randomUUID();
+        Reservation arrived = sampleReservation();
+        arrived.setStatus(com.vora.reservation.domain.enums.ReservationStatus.ARRIVEE_CONFIRMEE);
+        when(driveTripService.confirmArrival(any(), eq(id))).thenReturn(arrived);
+
+        mockMvc.perform(post("/api/v1/reservations/{id}/arrival", id)
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ID, "7")
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ROLE, "CLIENT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARRIVEE_CONFIRMEE"));
+    }
+
+    @Test
+    void arrivalShouldReturn403WhenNotOwner() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(driveTripService.confirmArrival(any(), eq(id))).thenThrow(
+                new ForbiddenOperationException("Vous ne pouvez confirmer que vos propres réservations."));
+
+        mockMvc.perform(post("/api/v1/reservations/{id}/arrival", id)
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ID, "8")
+                        .header(GatewayHeaderAuthenticationFilter.HEADER_USER_ROLE, "CLIENT"))
+                .andExpect(status().isForbidden());
+    }
+
 }

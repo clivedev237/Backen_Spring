@@ -1,13 +1,15 @@
 package com.vora.reservation.client.geo;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.vora.reservation.application.exception.GeoServiceUnavailableException;
 import com.vora.reservation.infrastructure.client.geo.DjangoGeoClient;
-import com.vora.reservation.infrastructure.client.geo.dto.GeoPoint;
+import com.vora.reservation.infrastructure.client.geo.dto.LatLng;
+import com.vora.reservation.infrastructure.client.geo.dto.OptimizeTurnRequest;
 import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationRequest;
-import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.client.MockServerRestClientCustomizer;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -24,10 +26,9 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * {@link MockServerRestClientCustomizer} permet de brancher un
- * {@link MockRestServiceServer} sur un {@link RestClient.Builder}, sans
- * dépendance supplémentaire (disponible depuis Spring Boot 3.2 via
- * spring-boot-starter-test, déjà présent dans le pom).
+ * Utilise le même {@link MappingJackson2HttpMessageConverter} snake_case
+ * que {@code GeoClientConfig} pour vérifier que le JSON envoyé à Django
+ * Geo respecte bien son contrat réel ({@code driver_id}, {@code tolerance_meters}...).
  */
 class DjangoGeoClientTest {
     private static final String BASE_URL = "http://geo.test";
@@ -41,49 +42,52 @@ class DjangoGeoClientTest {
         MockServerRestClientCustomizer customizer = new MockServerRestClientCustomizer();
         customizer.customize(builder);
         this.mockServer = customizer.getServer();
+
+        com.fasterxml.jackson.databind.ObjectMapper snakeCaseMapper =
+                com.fasterxml.jackson.databind.json.JsonMapper.builder()
+                        .propertyNamingStrategy(com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE)
+                        .build();
+        builder.messageConverters(converters -> {
+            converters.removeIf(c -> c instanceof MappingJackson2HttpMessageConverter);
+            converters.add(0, new MappingJackson2HttpMessageConverter(snakeCaseMapper));
+        });
+
         this.client = new DjangoGeoClient(builder.build());
     }
 
-    private VerifyDestinationRequest sampleRequest() {
-        return new VerifyDestinationRequest(
-                new GeoPoint(new BigDecimal("3.866700"), new BigDecimal("11.516700")),
-                new GeoPoint(new BigDecimal("3.883300"), new BigDecimal("11.516700")));
-    }
-
     @Test
-    void shouldReturnCompatibleCorridorsWhenDestinationIsValid() {
+    void shouldSendSnakeCaseBodyForVerifyDestination() {
         mockServer.expect(requestTo(BASE_URL + "/api/v1/geo/verify-destination"))
                 .andExpect(method(POST))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json("""
+                        {"driver_id": 42, "destination": {"lat": 3.8833, "lng": 11.5167}}
+                        """))
                 .andRespond(withSuccess("""
-                        {
-                          "valid": true,
-                          "toleranceMeters": 750.0,
-                          "compatibleCorridors": [
-                            {"driverId": 42, "trajectoryId": "5b1f6f2e-1f0a-4b0a-9e3e-000000000001", "distanceMeters": 180.5}
-                          ]
-                        }
+                        {"compatible": true}
                         """, MediaType.APPLICATION_JSON));
 
-        VerifyDestinationResponse response = client.verifyDestination(sampleRequest());
+        VerifyDestinationRequest request = new VerifyDestinationRequest(
+                42L, new LatLng(new BigDecimal("3.8833"), new BigDecimal("11.5167")));
 
-        assertThat(response.valid()).isTrue();
-        assertThat(response.compatibleCorridors()).hasSize(1);
-        assertThat(response.compatibleCorridors().get(0).driverId()).isEqualTo(42L);
+        JsonNode response = client.verifyDestination(request);
+
+        assertThat(response.get("compatible").asBoolean()).isTrue();
         mockServer.verify();
     }
 
     @Test
-    void shouldReturnValidWithNoCompatibleCorridorWhenNoDriverAvailable() {
-        mockServer.expect(requestTo(BASE_URL + "/api/v1/geo/verify-destination"))
-                .andRespond(withSuccess("""
-                        {"valid": true, "toleranceMeters": 750.0, "compatibleCorridors": []}
-                        """, MediaType.APPLICATION_JSON));
+    void shouldSendSnakeCaseBodyForOptimizeTurn() {
+        mockServer.expect(requestTo(BASE_URL + "/api/v1/optimize/turn"))
+                .andExpect(method(POST))
+                .andExpect(content().json("""
+                        {"driver_id": 42}
+                        """))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        VerifyDestinationResponse response = client.verifyDestination(sampleRequest());
+        JsonNode response = client.optimizeTurn(new OptimizeTurnRequest(42L));
 
-        assertThat(response.valid()).isTrue();
-        assertThat(response.compatibleCorridors()).isEmpty();
+        assertThat(response).isNotNull();
         mockServer.verify();
     }
 
@@ -92,19 +96,20 @@ class DjangoGeoClientTest {
         mockServer.expect(requestTo(BASE_URL + "/api/v1/geo/verify-destination"))
                 .andRespond(withServerError());
 
-        assertThatThrownBy(() -> client.verifyDestination(sampleRequest()))
+        assertThatThrownBy(() -> client.verifyDestination(
+                new VerifyDestinationRequest(42L, new LatLng(BigDecimal.ZERO, BigDecimal.ZERO))))
                 .isInstanceOf(GeoServiceUnavailableException.class);
         mockServer.verify();
     }
 
     @Test
     void shouldThrowGeoServiceUnavailableOnConnectionFailure() {
-        mockServer.expect(requestTo(BASE_URL + "/api/v1/geo/verify-destination"))
+        mockServer.expect(requestTo(BASE_URL + "/api/v1/optimize/turn"))
                 .andRespond(request -> {
                     throw new IOException("connexion refusée (simulation)");
                 });
 
-        assertThatThrownBy(() -> client.verifyDestination(sampleRequest()))
+        assertThatThrownBy(() -> client.optimizeTurn(new OptimizeTurnRequest(42L)))
                 .isInstanceOf(GeoServiceUnavailableException.class);
     }
 }

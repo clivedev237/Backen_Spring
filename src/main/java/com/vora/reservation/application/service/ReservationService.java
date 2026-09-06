@@ -1,15 +1,11 @@
 package com.vora.reservation.application.service;
 
 import com.vora.reservation.api.dto.CreateReservationRequest;
-import com.vora.reservation.application.exception.DestinationOutOfCorridorException;
 import com.vora.reservation.application.exception.ForbiddenOperationException;
 import com.vora.reservation.application.exception.ReservationNotFoundException;
 import com.vora.reservation.domain.enums.ReservationStatus;
 import com.vora.reservation.domain.model.Reservation;
 import com.vora.reservation.infrastructure.client.geo.GeoClient;
-import com.vora.reservation.infrastructure.client.geo.dto.GeoPoint;
-import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationRequest;
-import com.vora.reservation.infrastructure.client.geo.dto.VerifyDestinationResponse;
 import com.vora.reservation.infrastructure.persistence.ReservationRepository;
 import com.vora.reservation.infrastructure.security.AuthenticatedUser;
 import com.vora.reservation.infrastructure.security.VoraRole;
@@ -20,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,6 +23,9 @@ import java.util.UUID;
 @Slf4j
 public class ReservationService {
     private final ReservationRepository reservationRepository;
+
+    // Conservé pour la suite (Phase 3/4 seront réécrites avec le vrai contrat
+    // Django) : injecté mais non utilisé pour l'instant, voir TODO ci-dessous.
     private final GeoClient geoClient;
 
     /**
@@ -35,18 +33,30 @@ public class ReservationService {
      * créer une réservation ; le {@code clientId} provient exclusivement de
      * l'identité posée par le Gateway, jamais du corps de la requête.
      * <p>
-     * Avant toute persistance, la destination est vérifiée auprès de Django
-     * Geo (cadrage §6, étape 3 ; POST /api/v1/geo/verify-destination). Voir
-     * {@link #verifyDestinationIsReachable} pour la distinction, importante,
-     * entre destination invalide (rejet) et absence de chauffeur compatible
-     * dans l'immédiat (pas un rejet, cadrage §5.1).
+     * <b>TODO (bloquant, cf. échange sur le contrat réel Django Geo)</b> :
+     * l'appel à {@code verify-destination} puis {@code optimize/turn} a été
+     * retiré temporairement. Le contrat réel obtenu montre que
+     * {@code verify-destination} vérifie UN SEUL {@code driverId} (pas de
+     * recherche multi-chauffeurs, pas de {@code pickup}), et que
+     * {@code optimize/turn} ne prend que {@code driverId}/{@code zoneId}
+     * sans aucune donnée de réservation. Deux points sont à clarifier avec
+     * l'équipe Django avant de rebrancher cette étape :
+     * <ol>
+     *   <li>Comment Réservation obtient la liste des {@code driverId}
+     *   candidats à tester (aucun endpoint de découverte "chauffeurs actifs
+     *   à proximité" dans le contrat fourni) ;</li>
+     *   <li>Comment {@code optimize/turn} accède aux réservations en attente
+     *   sans qu'on les lui transmette (lecture directe de la base partagée ?
+     *   contredit le §3 du cadrage).</li>
+     * </ol>
+     * En attendant, la réservation est créée directement en EN_ATTENTE
+     * (cadrage §5.1 : c'est de toute façon le comportement attendu tant
+     * qu'aucun chauffeur compatible n'est trouvé).
      */
     @Transactional
     public Reservation create(AuthenticatedUser requester, CreateReservationRequest request) {
         requireRole(requester, VoraRole.CLIENT,
                 "Seul un client peut créer une réservation.");
-
-        verifyDestinationIsReachable(request);
 
         Reservation reservation = Reservation.create(
                 requester.userId(),
@@ -63,52 +73,6 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
-    /**
-     * Vérifie la destination auprès de Django Geo avant de créer la
-     * réservation.
-     * <ul>
-     *   <li>Destination invalide ou non géocodable ({@code valid=false}) :
-     *   rejet de la création (cadrage §16) — {@link DestinationOutOfCorridorException}.</li>
-     *   <li>Destination valide mais aucun chauffeur compatible dans
-     *   l'immédiat ({@code compatibleCorridors} vide) : ce N'EST PAS une
-     *   erreur. La réservation est tout de même créée EN_ATTENTE et sera
-     *   réévaluée à chaque libération de place chez un chauffeur compatible
-     *   (cadrage §5.1). La diffusion effective d'offres arrive en Phase 5 ;
-     *   la liste des corridors compatibles n'est pas encore exploitée ici,
-     *   elle le sera à partir de la Phase 4 (optimize/turn).</li>
-     * </ul>
-     */
-    private void verifyDestinationIsReachable(CreateReservationRequest request) {
-        VerifyDestinationRequest geoRequest = new VerifyDestinationRequest(
-                new GeoPoint(request.pickup().latitude(), request.pickup().longitude()),
-                new GeoPoint(request.destination().latitude(), request.destination().longitude())
-        );
-
-        VerifyDestinationResponse response = geoClient.verifyDestination(geoRequest);
-
-        if (response == null || !response.valid()) {
-            throw new DestinationOutOfCorridorException(
-                    "La destination n'a pas pu être vérifiée : adresse non géocodable ou hors de la zone de couverture VORA.");
-        }
-
-        List<VerifyDestinationResponse.CompatibleCorridor> compatibleCorridors = response.compatibleCorridors();
-        int compatibleCount = compatibleCorridors == null ? 0 : compatibleCorridors.size();
-        if (compatibleCount == 0) {
-            log.info("Destination valide mais aucun chauffeur compatible dans l'immédiat : "
-                    + "la réservation reste EN_ATTENTE (cadrage §5.1).");
-        } else {
-            log.debug("{} corridor(s) compatible(s) trouvé(s) (tolérance {} m).",
-                    compatibleCount, response.toleranceMeters());
-        }
-    }
-
-    /**
-     * Consultation d'une réservation par identifiant. Un client ne peut voir
-     * que ses propres réservations ; un admin voit tout. L'accès chauffeur
-     * n'est pas encore couvert : il arrivera avec la diffusion des offres
-     * (Phase 5), une fois qu'un chauffeur peut légitimement être concerné par
-     * une réservation qui ne lui appartient pas.
-     */
     @Transactional(readOnly = true)
     public Reservation getById(AuthenticatedUser requester, UUID id) {
         if (requester.role() == VoraRole.CHAUFFEUR) {
@@ -126,12 +90,6 @@ public class ReservationService {
         return reservation;
     }
 
-    /**
-     * Liste paginée des réservations. Un CLIENT ne voit que les siennes (le
-     * filtre {@code clientId} demandé, s'il en fournit un, est ignoré). Un
-     * ADMIN peut filtrer par client. Un CHAUFFEUR n'a pas encore accès à
-     * cette consultation (voir {@link #getById}).
-     */
     @Transactional(readOnly = true)
     public Page<Reservation> list(AuthenticatedUser requester,
                                   ReservationStatus statusFilter,

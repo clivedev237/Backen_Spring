@@ -24,6 +24,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Turn {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -92,6 +93,11 @@ public class Turn {
     /**
      * Libère une place (débarquement, ou annulation d'un passager déjà accepté —
      * confirmé, cadrage §5.1) et repasse le Turn en OUVERT si besoin.
+     * <p>
+     * Ne fait jamais repasser un Turn EN_COURS en OUVERT : "au moins un passager
+     * à bord" reste vrai tant que le Turn n'est pas clôturé (cadrage §7.2), même
+     * si le compteur de charge redescend temporairement à zéro entre deux
+     * embarquements.
      */
     public void releaseSeat() {
         if (currentLoad > 0) {
@@ -101,4 +107,30 @@ public class Turn {
             status = TurnStatus.OUVERT;
         }
     }
+
+    /**
+     * Premier embarquement du Turn (cadrage §7.2 : "au moins un passager est à
+     * bord"). Idempotent : un second embarquement dans le même Turn ne
+     * réinitialise ni le statut ni started_at.
+     */
+    public void startBoarding() {
+        if (status == TurnStatus.OUVERT || status == TurnStatus.COMPLET) {
+            status = TurnStatus.EN_COURS;
+        }
+        if (startedAt == null) {
+            startedAt = OffsetDateTime.now();
+        }
+    }
+
+    /**
+     * Clôture définitive du Turn (cadrage §6, étape 14) : appelée uniquement
+     * quand tous les passagers sont arrivés (current_load == 0) et qu'aucun
+     * nouveau candidat compatible n'a été trouvé lors de la relance de
+     * matching.
+     */
+    public void close() {
+        status = TurnStatus.TERMINE;
+        endedAt = OffsetDateTime.now();
+    }
+
 }
