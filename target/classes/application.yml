@@ -44,7 +44,7 @@ vora:
     connect-timeout-ms: ${VORA_GEO_CONNECT_TIMEOUT_MS:2000}
     read-timeout-ms: ${VORA_GEO_READ_TIMEOUT_MS:3000}
   auth-payment:
-    base-url: ${VORA_AUTH_PAYMENT_BASE_URL:http://localhost:8082}
+    base-url: ${VORA_AUTH_PAYMENT_BASE_URL:http://localhost:8085}
     # Timeouts dédiés à Node Auth & Payment : plus longs que Django Geo car
     # l'appel /initiate peut relayer un appel à l'agrégateur Soleaspay.
     connect-timeout-ms: ${VORA_AUTH_PAYMENT_CONNECT_TIMEOUT_MS:2000}
